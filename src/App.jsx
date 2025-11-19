@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { db } from './firebaseConfig';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
 
@@ -8,16 +10,7 @@ const App = () => {
 
   const categories = ["alimentação", "abrigo", "emergencia", "centro_de_ajuda", "caps"];
 
-  const [markers, setMarkers] = useState([
-    {
-      position: [-26.304408, -48.846383],
-      title: "Centro de Ajuda",
-      description: "Local de assistência para pessoas em necessidade.",
-      category: "centro_de_ajuda",
-      hours: [{ from: "09:00", to: "18:00" }],
-      info: "Oferece suporte psicológico e assistencial.",
-    }
-  ]);
+  const [markers, setMarkers] = useState([]);
 
   const [activeFilters, setActiveFilters] = useState({
     alimentação: true,
@@ -39,6 +32,32 @@ const App = () => {
     hours: [],
     info: '',
   });
+
+  useEffect(() => {
+    const fetchMarkers = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'locais'));
+        const markersData = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          markersData.push({
+            id: doc.id,
+            position: [data.latitude, data.longitude],
+            title: data.nome,
+            description: data.descricao,
+            category: data.categoria,
+            hours: data.hours || [],
+            info: data.info || '',
+          });
+        });
+        setMarkers(markersData);
+      } catch (error) {
+        console.error('Erro ao buscar marcadores:', error);
+      }
+    };
+
+    fetchMarkers();
+  }, []);
 
   const handleFilterChange = (category) => {
     setActiveFilters((prevFilters) => ({
@@ -89,21 +108,45 @@ const App = () => {
     setIsAddingMarker(false);
   };
 
-  const handleSaveMarker = () => {
+  const handleSaveMarker = async () => {
     if (newMarker.title && newMarker.position) {
-      const newMarkerData = { ...newMarker };
-      setMarkers((prevMarkers) => [...prevMarkers, newMarkerData]);
+      try {
+        const markerData = {
+          nome: newMarker.title,
+          descricao: newMarker.description,
+          categoria: newMarker.category,
+          latitude: newMarker.position[0],
+          longitude: newMarker.position[1],
+          hours: newMarker.hours,
+          info: newMarker.info,
+        };
 
-      setShowModal(false);
-      setIsAddingMarker(false);
-      setNewMarker({
-        position: null,
-        title: '',
-        description: '',
-        category: categories[0],
-        hours: [],
-        info: '',
-      });
+        await addDoc(collection(db, 'locais'), markerData);
+
+        const newMarkerData = {
+          position: newMarker.position,
+          title: newMarker.title,
+          description: newMarker.description,
+          category: newMarker.category,
+          hours: newMarker.hours,
+          info: newMarker.info,
+        };
+        setMarkers((prevMarkers) => [...prevMarkers, newMarkerData]);
+
+        setShowModal(false);
+        setIsAddingMarker(false);
+        setNewMarker({
+          position: null,
+          title: '',
+          description: '',
+          category: categories[0],
+          hours: [],
+          info: '',
+        });
+      } catch (error) {
+        console.error('Erro ao salvar marcador:', error);
+        alert('Erro ao salvar marcador. Tente novamente.');
+      }
     } else {
       alert('Por favor, preencha todos os campos obrigatórios.');
     }
@@ -166,7 +209,7 @@ const App = () => {
         />
         <SetMapBounds bounds={[[-26.6, -49.2], [-25.8, -48.5]]} />
         {filteredMarkers.map((marker, index) => (
-          <Marker key={index} position={marker.position}>
+          <Marker key={marker.id || index} position={marker.position}>
             <Popup>
               <div className="leaflet-popup-content">
                 <h2>{marker.title}</h2>
