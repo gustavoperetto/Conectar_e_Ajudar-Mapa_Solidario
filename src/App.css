@@ -236,6 +236,88 @@ label:hover {
   cursor: crosshair;
 }
 
+.popup-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  justify-content: center;
+}
+
+.popup-button-edit,
+.popup-button-delete {
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  font-size: 14px;
+}
+
+.popup-button-edit {
+  background-color: #3498db;
+}
+
+.popup-button-edit:hover {
+  background-color: #2980b9;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.popup-button-delete {
+  background-color: #3498db;
+}
+
+.popup-button-delete:hover {
+  background-color: #2980b9;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.popup-button-edit svg,
+.popup-button-delete svg {
+  width: 16px;
+  height: 16px;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.delete-button-confirm,
+.delete-button-cancel {
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  font-size: 16px;
+}
+
+.delete-button-confirm {
+  background-color: #e74c3c;
+}
+
+.delete-button-confirm:hover {
+  background-color: #c0392b;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.25);
+}
+
+.delete-button-cancel {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.delete-button-cancel:hover {
+  background-color: #7f8c8d;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.25);
+}
+
 @media (max-width: 768px) {
   .modal {
     width: 95%;
