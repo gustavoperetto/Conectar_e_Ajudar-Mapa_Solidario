@@ -8,17 +8,9 @@ import './App.css';
 const App = () => {
   const position = [-26.292977, -48.848306];
 
-  const categories = ["alimentação", "abrigo", "emergencia", "centro_de_ajuda", "caps"];
-
+  const [categories, setCategories] = useState([]);
   const [markers, setMarkers] = useState([]);
-
-  const [activeFilters, setActiveFilters] = useState({
-    alimentação: true,
-    abrigo: true,
-    emergencia: true,
-    centro_de_ajuda: true,
-    caps: true,
-  });
+  const [activeFilters, setActiveFilters] = useState({});
 
   const [showFilters, setShowFilters] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -31,10 +23,47 @@ const App = () => {
     position: null,
     title: '',
     description: '',
-    category: categories[0],
+    category: '',
     hours: [{ from: '', to: '' }],
     info: '',
   });
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'categorias'));
+        const categoriesData = [];
+        const filters = {};
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const categoryId = data.id || doc.id;
+          categoriesData.push({
+            id: categoryId,
+            nome: data.nome,
+            descricao: data.descricao || '',
+          });
+          filters[categoryId] = true;
+        });
+        setCategories(categoriesData);
+        setActiveFilters(filters);
+        if (categoriesData.length > 0) {
+          setNewMarker((prev) => {
+            if (!prev.category) {
+              return {
+                ...prev,
+                category: categoriesData[0].id,
+              };
+            }
+            return prev;
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao buscar categorias:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchMarkers = async () => {
@@ -114,7 +143,7 @@ const App = () => {
       position: null,
       title: '',
       description: '',
-      category: categories[0],
+      category: categories.length > 0 ? categories[0].id : '',
       hours: [{ from: '', to: '' }],
       info: '',
     });
@@ -207,14 +236,14 @@ const App = () => {
 
         setShowModal(false);
         setIsAddingMarker(false);
-        setNewMarker({
-          position: null,
-          title: '',
-          description: '',
-          category: categories[0],
-          hours: [{ from: '', to: '' }],
-          info: '',
-        });
+          setNewMarker({
+            position: null,
+            title: '',
+            description: '',
+            category: categories.length > 0 ? categories[0].id : '',
+            hours: [{ from: '', to: '' }],
+            info: '',
+          });
       } catch (error) {
         console.error('Erro ao salvar marcador:', error);
         alert('Erro ao salvar marcador. Tente novamente.');
@@ -286,14 +315,14 @@ const App = () => {
       {showFilters && (
         <div className="filter-box">
           <h1 className="project-title">Conectar e Ajudar: Mapa Solidário</h1>
-          {categories.map((category, index) => (
-            <label key={index}>
+          {categories.map((category) => (
+            <label key={category.id}>
               <input
                 type="checkbox"
-                name={category}
-                checked={activeFilters[category]}
-                onChange={() => handleFilterChange(category)}
-              /> {category.charAt(0).toUpperCase() + category.slice(1).replace(/([A-Z])/g, ' $1')}
+                name={category.id}
+                checked={activeFilters[category.id] || false}
+                onChange={() => handleFilterChange(category.id)}
+              /> {category.nome}
             </label>
           ))}
           <button className="add-marker-button" onClick={handleAddMarker}>
@@ -382,8 +411,8 @@ const App = () => {
                 value={newMarker.category}
                 onChange={(e) => setNewMarker({ ...newMarker, category: e.target.value })}
               >
-                {categories.map((cat, index) => (
-                  <option key={index} value={cat}>{cat}</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.nome}</option>
                 ))}
               </select>
             </label>
