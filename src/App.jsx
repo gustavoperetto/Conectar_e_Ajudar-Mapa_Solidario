@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
@@ -62,6 +62,17 @@ const App = () => {
     fetchMarkers();
   }, []);
 
+  useEffect(() => {
+    if (isAddingMarker) {
+      document.body.classList.add('map-add-marker-cursor');
+    } else {
+      document.body.classList.remove('map-add-marker-cursor');
+    }
+    return () => {
+      document.body.classList.remove('map-add-marker-cursor');
+    };
+  }, [isAddingMarker]);
+
   const handleFilterChange = (category) => {
     setActiveFilters((prevFilters) => ({
       ...prevFilters,
@@ -83,7 +94,7 @@ const App = () => {
     return activeFilters[categoryKey];
   });
 
-  const handleMapClick = (e) => {
+  const handleMapClick = useCallback((e) => {
     if (isAddingMarker) {
       setNewMarker((prev) => ({
         ...prev,
@@ -92,7 +103,7 @@ const App = () => {
       setShowModal(true);
       setIsAddingMarker(false);
     }
-  };
+  }, [isAddingMarker]);
 
   const handleAddMarker = () => {
     setIsAddingMarker(true);
@@ -226,10 +237,25 @@ const App = () => {
     setNewMarker((prev) => ({ ...prev, hours: updatedHours }));
   };
 
-  const SetMapBounds = ({ bounds }) => {
+  const SetMapBounds = ({ bounds, onMapClick, isAdding }) => {
     const map = useMap();
-    map.setMaxBounds(bounds);
-    map.on('click', handleMapClick);
+    
+    useEffect(() => {
+      map.setMaxBounds(bounds);
+    }, [map, bounds]);
+
+    useEffect(() => {
+      if (isAdding) {
+        const handleClick = (e) => {
+          onMapClick(e);
+        };
+        map.on('click', handleClick);
+        return () => {
+          map.off('click', handleClick);
+        };
+      }
+    }, [map, isAdding, onMapClick]);
+
     return null;
   };
 
@@ -268,7 +294,11 @@ const App = () => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        <SetMapBounds bounds={[[-26.6, -49.2], [-25.8, -48.5]]} />
+        <SetMapBounds 
+          bounds={[[-26.6, -49.2], [-25.8, -48.5]]} 
+          onMapClick={handleMapClick}
+          isAdding={isAddingMarker}
+        />
         {filteredMarkers.map((marker, index) => (
           <Marker key={marker.id || index} position={marker.position}>
             <Popup>
