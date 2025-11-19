@@ -32,7 +32,7 @@ const App = () => {
     title: '',
     description: '',
     category: categories[0],
-    hours: [],
+    hours: [{ from: '', to: '' }],
     info: '',
   });
 
@@ -115,7 +115,7 @@ const App = () => {
       title: '',
       description: '',
       category: categories[0],
-      hours: [],
+      hours: [{ from: '', to: '' }],
       info: '',
     });
     setShowModal(false);
@@ -130,7 +130,7 @@ const App = () => {
       title: marker.title,
       description: marker.description,
       category: marker.category,
-      hours: marker.hours || [],
+      hours: marker.hours && marker.hours.length > 0 ? marker.hours : [{ from: '', to: '' }],
       info: marker.info || '',
     });
     setShowModal(true);
@@ -212,7 +212,7 @@ const App = () => {
           title: '',
           description: '',
           category: categories[0],
-          hours: [],
+          hours: [{ from: '', to: '' }],
           info: '',
         });
       } catch (error) {
@@ -225,10 +225,28 @@ const App = () => {
   };
 
   const handleAddSchedule = () => {
-    setNewMarker((prev) => ({
-      ...prev,
-      hours: [...prev.hours, { from: '', to: '' }],
-    }));
+    setNewMarker((prev) => {
+      if (prev.hours.length < 7) {
+        return {
+          ...prev,
+          hours: [...prev.hours, { from: '', to: '' }],
+        };
+      }
+      return prev;
+    });
+  };
+
+  const handleRemoveSchedule = (index) => {
+    setNewMarker((prev) => {
+      if (prev.hours.length > 1) {
+        const updatedHours = prev.hours.filter((_, i) => i !== index);
+        return {
+          ...prev,
+          hours: updatedHours,
+        };
+      }
+      return prev;
+    });
   };
 
   const handleScheduleChange = (index, field, value) => {
@@ -372,7 +390,7 @@ const App = () => {
             <label>
               Horários de Atendimento:
               {newMarker.hours.map((schedule, index) => (
-                <div key={index}>
+                <div key={index} className="schedule-item">
                   <input
                     type="time"
                     value={schedule.from}
@@ -384,9 +402,21 @@ const App = () => {
                     value={schedule.to}
                     onChange={(e) => handleScheduleChange(index, 'to', e.target.value)}
                   />
+                  {newMarker.hours.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSchedule(index)}
+                      className="remove-schedule-button"
+                      title="Remover turno"
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               ))}
-              <button type="button" onClick={handleAddSchedule}>Adicionar Turno</button>
+              {newMarker.hours.length < 7 && (
+                <button type="button" onClick={handleAddSchedule}>Adicionar Turno</button>
+              )}
             </label>
             <label>
               Informações Adicionais:
