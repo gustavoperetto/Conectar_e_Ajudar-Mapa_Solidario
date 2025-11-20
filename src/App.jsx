@@ -38,6 +38,19 @@ const App = () => {
     info: '',
   });
 
+  const getEmptyMarker = useCallback(() => ({
+    position: null,
+    title: '',
+    description: '',
+    category: categories.length > 0 ? categories[0].id : '',
+    hours: [{ from: '', to: '' }],
+    info: '',
+  }), [categories]);
+
+  const resetNewMarker = useCallback(() => {
+    setNewMarker(getEmptyMarker());
+  }, [getEmptyMarker]);
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -144,19 +157,19 @@ const App = () => {
     }
   }, [isAddingMarker]);
 
-  const handleAddMarker = () => {
-    setIsAddingMarker(true);
+  const handleToggleAddMarker = () => {
+    if (isAddingMarker) {
+      setIsAddingMarker(false);
+      resetNewMarker();
+    } else {
+      resetNewMarker();
+      setIsAddingMarker(true);
+    }
+    setShowModal(false);
   };
 
   const handleCancel = () => {
-    setNewMarker({
-      position: null,
-      title: '',
-      description: '',
-      category: categories.length > 0 ? categories[0].id : '',
-      hours: [{ from: '', to: '' }],
-      info: '',
-    });
+    resetNewMarker();
     setShowModal(false);
     setIsAddingMarker(false);
     setEditingMarkerId(null);
@@ -246,14 +259,7 @@ const App = () => {
 
         setShowModal(false);
         setIsAddingMarker(false);
-          setNewMarker({
-            position: null,
-            title: '',
-            description: '',
-            category: categories.length > 0 ? categories[0].id : '',
-            hours: [{ from: '', to: '' }],
-            info: '',
-          });
+        resetNewMarker();
       } catch (error) {
         console.error('Erro ao salvar marcador:', error);
         alert('Erro ao salvar marcador. Tente novamente.');
@@ -335,8 +341,8 @@ const App = () => {
               /> {category.nome}
             </label>
           ))}
-          <button className="add-marker-button" onClick={handleAddMarker}>
-            Adicionar Marcador
+          <button className="add-marker-button" onClick={handleToggleAddMarker}>
+            {isAddingMarker ? 'Cancelar' : 'Adicionar Marcador'}
           </button>
         </div>
       )}
