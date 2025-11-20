@@ -9,6 +9,7 @@ import { db } from './firebaseConfig';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
 
+delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
   iconUrl: markerIcon,
